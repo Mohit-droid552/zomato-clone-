@@ -1,31 +1,52 @@
 import FoodItem from '../models/FoodItem.js';
 import Restaurant from '../models/Restaurant.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { getFallbackFoodItems } from '../utils/fallbackData.js';
 
 // @desc    Get all food items (optionally filter by restaurant, category, isVeg, search)
 // @route   GET /api/v1/food-items
 // @access  Public
 export const getFoodItems = asyncHandler(async (req, res) => {
   const { restaurant, category, isVeg, search } = req.query;
-  const query = {};
+  let foodItems = [];
 
-  if (restaurant) {
-    query.restaurant = restaurant;
+  try {
+    const query = {};
+
+    if (restaurant) {
+      query.restaurant = restaurant;
+    }
+
+    if (category) {
+      query.category = { $regex: category, $options: 'i' };
+    }
+
+    if (isVeg) {
+      query.isVeg = isVeg === 'true';
+    }
+
+    if (search) {
+      query.name = { $regex: search, $options: 'i' };
+    }
+
+    foodItems = await FoodItem.find(query);
+  } catch (error) {
+    console.warn(`[FoodItems Query Warning] Using fallback dataset: ${error.message}`);
   }
 
-  if (category) {
-    query.category = { $regex: category, $options: 'i' };
-  }
+  if (!foodItems || foodItems.length === 0) {
+    foodItems = getFallbackFoodItems(restaurant);
 
-  if (isVeg) {
-    query.isVeg = isVeg === 'true';
+    if (category) {
+      foodItems = foodItems.filter((f) => f.category.toLowerCase().includes(category.toLowerCase()));
+    }
+    if (isVeg) {
+      foodItems = foodItems.filter((f) => f.isVeg === (isVeg === 'true'));
+    }
+    if (search) {
+      foodItems = foodItems.filter((f) => f.name.toLowerCase().includes(search.toLowerCase()));
+    }
   }
-
-  if (search) {
-    query.name = { $regex: search, $options: 'i' };
-  }
-
-  const foodItems = await FoodItem.find(query);
 
   res.status(200).json({
     success: true,
