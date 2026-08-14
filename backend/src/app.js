@@ -36,6 +36,20 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Root Welcome Route
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Welcome to Zomato Clone Backend API Server',
+    endpoints: {
+      health: '/api/v1/health',
+      restaurants: '/api/v1/restaurants',
+      foodItems: '/api/v1/food-items',
+      auth: '/api/v1/auth'
+    }
+  });
+});
+
 // API Health Check
 app.get('/api/v1/health', (req, res) => {
   res.status(200).json({
