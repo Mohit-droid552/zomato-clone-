@@ -21,7 +21,13 @@ if (NODE_ENV === 'development') {
 // CORS middleware
 app.use(
   cors({
-    origin: CLIENT_URL,
+    origin: (origin, callback) => {
+      if (!origin || origin === CLIENT_URL || origin.endsWith('.vercel.app') || NODE_ENV === 'development') {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true,
   })
 );
